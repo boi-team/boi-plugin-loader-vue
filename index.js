@@ -19,4 +19,4 @@ let options = {
         'vue-loader'
     ]
 };
-module.exports = new boli.PluginLoader('extend', options);
+module.exports = new boi.PluginLoader('extend', options);
