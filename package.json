@@ -1,6 +1,6 @@
 {
   "name": "boli-plugin-loader-vue",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "boli plugin for config how to build vue files",
   "main": "index.js",
   "keywords": [
