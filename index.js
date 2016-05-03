@@ -1,5 +1,7 @@
 'use strict'
 
+let boi = require('boi');
+
 let options = {
     module: {
         preloader: null,
