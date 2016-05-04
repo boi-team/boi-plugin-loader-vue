@@ -1,6 +1,6 @@
 'use strict'
 
-let boi = require('boi');
+let ClassLoader = require('boi').PluginClass.loader;
 
 let options = {
     module: {
@@ -21,4 +21,4 @@ let options = {
         'vue-loader'
     ]
 };
-module.exports = new boi.PluginLoader('extend', options);
+module.exports = new ClassLoader('extend', options);
