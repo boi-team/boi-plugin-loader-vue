@@ -1,6 +1,6 @@
 'use strict'
 
-let ClassLoader = require('boi').PluginClass.loader;
+let ClassLoader = require('boi-kernel').PluginClass.loader;
 
 let options = {
     module: {
