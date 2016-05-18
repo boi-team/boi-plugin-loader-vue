@@ -1,24 +1,87 @@
 'use strict'
 
+let path = require('path');
+let ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+let stylePlugin = new ExtractTextPlugin('style/[name].[hash:8].css');
+
+let cssLoaders = function(opts) {
+    let options = opts || {};
+    // generate loader string to be used with extract text plugin
+    function generateLoaders(loaders) {
+        let sourceLoader = loaders.map(function(loader) {
+            let extraParamChar;
+            if (/\?/.test(loader)) {
+                loader = loader.replace(/\?/, '-loader?');
+                extraParamChar = '&';
+            } else {
+                loader = loader + '-loader';
+                extraParamChar = '?';
+            }
+            return loader + (options.sourceMap ? extraParamChar + 'sourceMap' : '');
+        }).join('!')
+
+        if (options.extract) {
+            return stylePlugin.extract('vue-style-loader', sourceLoader);
+        } else {
+            return ['vue-style-loader', sourceLoader].join('!');
+        }
+    }
+
+    // http://vuejs.github.io/vue-loader/configurations/extract-css.html
+    return {
+        css: generateLoaders(['css']),
+        postcss: generateLoaders(['css']),
+        less: generateLoaders(['css', 'less']),
+        sass: generateLoaders(['css', 'sass?indentedSyntax']),
+        scss: generateLoaders(['css', 'sass']),
+        stylus: generateLoaders(['css', 'stylus']),
+        styl: generateLoaders(['css', 'stylus'])
+    }
+}
+
+// Generate loaders for standalone style files (outside of .vue)
+let styleLoaders = function(options) {
+    let output = [];
+    let loaders = cssLoaders(options);
+    for (let extension in loaders) {
+        let loader = loaders[extension];
+        output.push({
+            test: new RegExp('\\.' + extension + '$'),
+            loader: loader
+        });
+    }
+    return output;
+}
+
 let ClassLoader = boi.PluginClass.loader;
 
 let options = {
     module: {
         preloader: null,
         postloader: null,
-        loader: {
+        loaders: [{
             test: /\.vue$/,
-            loader: 'vue',
-            query: null
-        }
+            loader: 'vue'
+        }].concat(styleLoaders({
+            extract: true
+        }))
     },
     noParse: null,
-    plugins: null,
+    plugins: [stylePlugin],
+    extra: {
+        vue: {
+            loaders: cssLoaders({
+                extract: true
+            })
+        }
+    },
     // 插件依赖的第三方module
     // 此配置项是为了解决低版本npm树形安装node_modules引起的module寻址问题
     // 如果你确定使用npm 3.0.0及以上版本，可以不配置此项
     dependencies: [
-        'vue-loader'
+        'vue-loader',
+        'extract-text-webpack-plugin'
     ]
 };
 
