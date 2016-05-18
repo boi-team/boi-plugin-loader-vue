@@ -81,6 +81,8 @@ let options = {
     // 如果你确定使用npm 3.0.0及以上版本，可以不配置此项
     dependencies: [
         'vue-loader',
+        'vue-style-loader',
+        'vue-html-loader',
         'extract-text-webpack-plugin'
     ]
 };
