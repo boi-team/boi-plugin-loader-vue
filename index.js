@@ -3,7 +3,7 @@
 let path = require('path');
 let ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-let stylePlugin = new ExtractTextPlugin('style/[name].[hash:8].css');
+let stylePlugin = new ExtractTextPlugin('style/[name].[contenthash:8].css');
 
 let cssLoaders = function(opts) {
     let options = opts || {};
