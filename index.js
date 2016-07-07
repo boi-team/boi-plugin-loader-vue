@@ -87,5 +87,7 @@ let options = {
     ]
 };
 
-// 每个插件中创建实例的数量不限,但是建议每个loader插件只创建一个实例
-new ClassLoader('extend', options);
+module.exports = function(){
+    // 每个插件中创建实例的数量不限,但是建议每个loader插件只创建一个实例
+    new ClassLoader('extend', options);
+}
