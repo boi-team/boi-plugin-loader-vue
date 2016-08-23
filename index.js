@@ -73,7 +73,7 @@ module.exports = function(options) {
         plugins: [stylePlugin],
         extra: {
             vue: {
-                autoprefixer: options.autoprefix || true,
+                autoprefixer: options&&options.autoprefix || true,
                 loaders: cssLoaders({
                     extract: true
                 })
