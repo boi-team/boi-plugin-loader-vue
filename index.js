@@ -6,6 +6,7 @@ let ExtractTextPlugin = require('extract-text-webpack-plugin');
 module.exports = function(options) {
     let stylename = options && options.style && options.style.destDir ? (options.style.destDir + (options.style.useHash ? '/[name].[contenthash:8].css' : '/[name].css')) : 'style/[name].[contenthash:8].css';
     let stylePlugin = new ExtractTextPlugin(stylename);
+    let isAutoprefixer = options&&options.autoprefixer||true;
 
     let cssLoaders = function(opts) {
         let options = opts || {};
@@ -32,13 +33,13 @@ module.exports = function(options) {
 
         // http://vuejs.github.io/vue-loader/configurations/extract-css.html
         return {
-            css: generateLoaders(['css']),
-            postcss: generateLoaders(['css']),
-            less: generateLoaders(['css', 'less']),
-            sass: generateLoaders(['css', 'sass?indentedSyntax']),
-            scss: generateLoaders(['css', 'sass']),
-            stylus: generateLoaders(['css', 'stylus']),
-            styl: generateLoaders(['css', 'stylus'])
+            css: isAutoprefixer?generateLoaders(['css']):generateLoaders(['css?-autoprefixer']),
+            postcss: isAutoprefixer?generateLoaders(['css']):generateLoaders(['css?-autoprefixer']),
+            less: isAutoprefixer?generateLoaders(['css', 'less']):generateLoaders(['css?-autoprefixer', 'less']),
+            sass: isAutoprefixer?generateLoaders(['css', 'sass?indentedSyntax']):generateLoaders(['css?-autoprefixer', 'sass?indentedSyntax']),
+            scss: isAutoprefixer?generateLoaders(['css', 'sass']):generateLoaders(['css?-autoprefixer', 'sass']),
+            stylus: isAutoprefixer?generateLoaders(['css', 'stylus']):generateLoaders(['css?-autoprefixer', 'stylus']),
+            styl: isAutoprefixer?generateLoaders(['css', 'stylus']:generateLoaders(['css?-autoprefixer', 'stylus']))
         }
     }
 
@@ -73,7 +74,7 @@ module.exports = function(options) {
         plugins: [stylePlugin],
         extra: {
             vue: {
-                autoprefixer: options&&options.autoprefix || true,
+                autoprefixer: isAutoprefixer,
                 loaders: cssLoaders({
                     extract: true
                 })
