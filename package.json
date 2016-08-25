@@ -1,6 +1,6 @@
 {
   "name": "boi-plugin-loader-vue",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "boi plugin for config how to build vue files",
   "main": "index.js",
   "keywords": [
