@@ -1,6 +1,7 @@
 'use strict'
 
 require('shelljs/global');
+const _ = require('lodash');
 const Path = require('path');
 const Glob = require('glob');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
@@ -14,35 +15,36 @@ const DEFAULT_OPTIONS = {
   },
   autoprefixer: true,
   sprites: {
-      // 散列图片目录
-      source: 'icons',
-      // 是否根据子目录分别编译输出
-      split: true,
-      // 是否识别retina命名标识
-      retina: true,
-      // 自行配置postcss-sprite编译配置
-      // @see https://github.com/2createStudio/postcss-sprites
-      postcssSpritesOpts: null
+    ext: ['jpg', 'png', 'gif'],
+    // 散列图片目录
+    source: 'icons',
+    // 是否根据子目录分别编译输出
+    split: true,
+    // 是否识别retina命名标识
+    retina: true,
+    // 自行配置postcss-sprite编译配置
+    // @see https://github.com/2createStudio/postcss-sprites
+    postcssSpritesOpts: null
   }
 }
 module.exports = function (opts) {
   const ENV = process.env.BOI_ENV;
 
-  let options = Object.assign({},DEFAULT_OPTIONS);
+  let globalOpts = Object.assign({}, DEFAULT_OPTIONS);
 
-  if(opts){
+  if (opts) {
     let _keys = Object.keys(opts);
     if (_keys.indexOf(ENV) === -1) {
       // 如果配置项中无环境特定配置，则直接赋值
-      options = Object.assign({},options,opts);
+      globalOpts = Object.assign({}, globalOpts, opts);
     } else {
       _keys.forEach((key) => {
         // 区分配置项是特定env生效还是共用
         if (key === ENV) {
-          options = Object.assign({}, options, opts[key]);
+          globalOpts = Object.assign({}, globalOpts, opts[key]);
         } else {
           // 屏蔽非当前环境的配置项
-          options = Object.assign({}, options, {
+          globalOpts = Object.assign({}, globalOpts, {
             [key]: opts[key]
           });
         }
@@ -56,9 +58,12 @@ module.exports = function (opts) {
     cp(Path.join(__dirname, '.babelrc'), Path.join(process.cwd()));
   }
 
-  let stylename = Path.posix.join(options.style.output,  (options.style.useHash ? '[name].[contenthash:8].css' :'[name].css'));
+  let stylename = Path.posix.join(globalOpts.style.output, (globalOpts.style.useHash ?
+    '[name].[contenthash:8].css' : '[name].css'));
   let stylePlugin = new ExtractTextPlugin(stylename);
-  let isAutoprefixer = options && options.autoprefixer || false;
+  let isAutoprefixer = globalOpts.autoprefixer;
+  let baseLoaders = isAutoprefixer ? ['css'] : ['css?-autoprefixer'];
+  let extras = null;
 
   let cssLoaders = function (opts) {
     let options = opts || {};
@@ -82,21 +87,15 @@ module.exports = function (opts) {
         return ['vue-style-loader', sourceLoader].join('!');
       }
     }
-
     // http://vuejs.github.io/vue-loader/configurations/extract-css.html
     return {
-      css: isAutoprefixer ? generateLoaders(['css']) : generateLoaders(['css?-autoprefixer']),
-      postcss: isAutoprefixer ? generateLoaders(['css']) : generateLoaders(['css?-autoprefixer']),
-      less: isAutoprefixer ? generateLoaders(['css', 'less']) : generateLoaders([
-        'css?-autoprefixer', 'less']),
-      sass: isAutoprefixer ? generateLoaders(['css', 'sass?indentedSyntax']) : generateLoaders(
-        ['css?-autoprefixer', 'sass?indentedSyntax']),
-      scss: isAutoprefixer ? generateLoaders(['css', 'sass']) : generateLoaders([
-        'css?-autoprefixer', 'sass']),
-      stylus: isAutoprefixer ? generateLoaders(['css', 'stylus']) : generateLoaders([
-        'css?-autoprefixer', 'stylus']),
-      styl: isAutoprefixer ? generateLoaders(['css', 'stylus']) : generateLoaders([
-        'css?-autoprefixer', 'stylus'])
+      css: generateLoaders(baseLoaders),
+      postcss: generateLoaders(baseLoaders),
+      less: generateLoaders(baseLoaders.concat(['less'])),
+      sass: generateLoaders(baseLoaders.concat(['sass?indentedSyntax'])),
+      scss: generateLoaders(baseLoaders.concat(['sass'])),
+      stylus: generateLoaders(baseLoaders.concat(['stylus'])),
+      styl: generateLoaders(baseLoaders.concat(['stylus']))
     };
   }
 
@@ -121,17 +120,15 @@ module.exports = function (opts) {
       loaders: [{
         test: /\.vue$/,
         loader: 'vue'
-      }].concat(styleLoaders({
-        extract: true
-      }))
+      }]
     },
     noParse: null,
     plugins: [stylePlugin],
-    extra: {
+    extra: Object.assign({}, extras, {
       vue: {
         autoprefixer: isAutoprefixer,
         loaders: cssLoaders({
-          extract: true
+          extract: false
         }),
         exclude: /node_modules/
       },
@@ -140,9 +137,8 @@ module.exports = function (opts) {
           'vue$': 'vue/dist/vue.common.js'
         }
       }
-    }
+    })
   };
-
   // 每个插件中创建实例的数量不限,但是建议每个loader插件只创建一个实例
   new ClassLoader('extend', config);
 }
