@@ -14,18 +14,18 @@ const DEFAULT_OPTIONS = {
     useHash: true
   },
   autoprefixer: true,
-  sprites: {
-    ext: ['jpg', 'png', 'gif'],
-    // 散列图片目录
-    source: 'icons',
-    // 是否根据子目录分别编译输出
-    split: true,
-    // 是否识别retina命名标识
-    retina: true,
-    // 自行配置postcss-sprite编译配置
-    // @see https://github.com/2createStudio/postcss-sprites
-    postcssSpritesOpts: null
-  }
+  // sprites: {
+  //   ext: ['jpg', 'png', 'gif'],
+  //   // 散列图片目录
+  //   source: 'icons',
+  //   // 是否根据子目录分别编译输出
+  //   split: true,
+  //   // 是否识别retina命名标识
+  //   retina: true,
+  //   // 自行配置postcss-sprite编译配置
+  //   // @see https://github.com/2createStudio/postcss-sprites
+  //   postcssSpritesOpts: null
+  // }
 }
 module.exports = function (opts) {
   const ENV = process.env.BOI_ENV;
@@ -123,7 +123,7 @@ module.exports = function (opts) {
       }]
     },
     noParse: null,
-    plugins: [stylePlugin],
+    // plugins: [stylePlugin],
     extra: Object.assign({}, extras, {
       vue: {
         autoprefixer: isAutoprefixer,
