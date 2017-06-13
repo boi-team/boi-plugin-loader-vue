@@ -1,6 +1,6 @@
 {
   "name": "boi-plugin-loader-vue",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "boi plugin for vue compiling",
   "main": "index.js",
   "keywords": [
