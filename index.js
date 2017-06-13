@@ -11,21 +11,10 @@ const ClassLoader = boi.PluginClass.loader;
 const DEFAULT_OPTIONS = {
   style: {
     output: 'style',
-    useHash: true
-  },
-  autoprefixer: true,
-  // sprites: {
-  //   ext: ['jpg', 'png', 'gif'],
-  //   // 散列图片目录
-  //   source: 'icons',
-  //   // 是否根据子目录分别编译输出
-  //   split: true,
-  //   // 是否识别retina命名标识
-  //   retina: true,
-  //   // 自行配置postcss-sprite编译配置
-  //   // @see https://github.com/2createStudio/postcss-sprites
-  //   postcssSpritesOpts: null
-  // }
+    useHash: true,
+    extract: false,
+    autoprefixer: false
+  }
 }
 module.exports = function (opts) {
   const ENV = process.env.BOI_ENV;
@@ -52,93 +41,71 @@ module.exports = function (opts) {
     }
   }
 
-  // Copy .babelrc to project folder
-  let babelrc = Glob.sync(Path.join(process.cwd(), '.babelrc'));
-  if (!babelrc || babelrc.length === 0) {
-    cp(Path.join(__dirname, '.babelrc'), Path.join(process.cwd()));
-  }
 
-  let stylename = Path.posix.join(globalOpts.style.output, (globalOpts.style.useHash ?
-    '[name].[contenthash:8].css' : '[name].css'));
-  let stylePlugin = new ExtractTextPlugin(stylename);
-  let isAutoprefixer = globalOpts.autoprefixer;
-  let baseLoaders = isAutoprefixer ? ['css'] : ['css?-autoprefixer'];
-  let extras = null;
+  const CssFilename = Path.posix.join(globalOpts.style.output, (ENV!=='dev'&&globalOpts.style
+    .useHash ? '[name].[contenthash:8].css' : '[name].css'));
+  const ExtractPlugin = new ExtractTextPlugin({
+    filename: CssFilename
+  });
 
-  let cssLoaders = function (opts) {
-    let options = opts || {};
-    // generate loader string to be used with extract text plugin
-    function generateLoaders(loaders) {
-      let sourceLoader = loaders.map(function (loader) {
-        let extraParamChar;
-        if (/\?/.test(loader)) {
-          loader = loader.replace(/\?/, '-loader?');
-          extraParamChar = '&';
-        } else {
-          loader = loader + '-loader';
-          extraParamChar = '?';
-        }
-        return loader + (options.sourceMap ? extraParamChar + 'sourceMap' : '');
-      }).join('!')
-
-      if (options.extract) {
-        return stylePlugin.extract('vue-style-loader', sourceLoader);
-      } else {
-        return ['vue-style-loader', sourceLoader].join('!');
-      }
-    }
-    // http://vuejs.github.io/vue-loader/configurations/extract-css.html
-    return {
-      css: generateLoaders(baseLoaders),
-      postcss: generateLoaders(baseLoaders),
-      less: generateLoaders(baseLoaders.concat(['less'])),
-      sass: generateLoaders(baseLoaders.concat(['sass?indentedSyntax'])),
-      scss: generateLoaders(baseLoaders.concat(['sass'])),
-      stylus: generateLoaders(baseLoaders.concat(['stylus'])),
-      styl: generateLoaders(baseLoaders.concat(['stylus']))
+  function GetLoaders() {
+    let baseLoaders = [];
+    let cssLoaderOptions = {
+      url: true,
+      minimize: true
     };
-  }
-
-  // Generate loaders for standalone style files (outside of .vue)
-  let styleLoaders = function (options) {
-    let output = [];
-    let loaders = cssLoaders(options);
-    for (let extension in loaders) {
-      let loader = loaders[extension];
-      output.push({
-        test: new RegExp('\\.' + extension + '$'),
-        loader: loader
+    // 开发环境不压缩
+    if (process.env.BOI_ENV === ENV.development) {
+      cssLoaderOptions.minimize = false;
+    }
+    baseLoaders.push({
+      loader: 'css-loader',
+      options: cssLoaderOptions
+    });
+    if (globalOpts.style.autoprefixer) {
+      baseLoaders.push({
+        loader: 'postcss-loader',
+        options: {
+          plugins: [require('autoprefixer')]
+        }
       });
     }
-    return output;
-  }
 
-  let config = {
+    return {
+      css: globalOpts.style.extract ? ExtractTextPlugin.extract({
+        use: baseLoaders,
+        fallback: 'vue-style-loader'
+      }) : [{
+        loader: 'vue-style-loader'
+      }].concat(baseLoaders),
+      less: globalOpts.style.extract ? ExtractTextPlugin.extract({
+        use: baseLoaders.concat(['less-loader']),
+        fallback: 'vue-style-loader'
+      }) : [{
+        loader: 'vue-style-loader'
+      }].concat(baseLoaders).concat(['less-loader']),
+      scss: globalOpts.style.extract ? ExtractTextPlugin.extract({
+        use: baseLoaders.concat(['sass-loader']),
+        fallback: 'vue-style-loader'
+      }) : [{
+        loader: 'vue-style-loader'
+      }].concat(baseLoaders).concat(['sass-loader'])
+    };
+  };
+
+  // 每个插件中创建实例的数量不限,但是建议每个loader插件只创建一个实例
+  new ClassLoader('external', {
     module: {
-      preloader: null,
-      postloader: null,
-      loaders: [{
+      rules: [{
         test: /\.vue$/,
-        loader: 'vue'
+        use: [{
+          loader: 'vue-loader',
+          options: {
+            loaders: GetLoaders()
+          }
+        }]
       }]
     },
-    noParse: null,
-    // plugins: [stylePlugin],
-    extra: Object.assign({}, extras, {
-      vue: {
-        autoprefixer: isAutoprefixer,
-        loaders: cssLoaders({
-          extract: false
-        }),
-        exclude: /node_modules/
-      },
-      resolve: {
-        alias: {
-          'vue$': 'vue/dist/vue.common.js'
-        }
-      }
-    })
-  };
-  // 每个插件中创建实例的数量不限,但是建议每个loader插件只创建一个实例
-  new ClassLoader('extend', config);
+    plugins: globalOpts.style.extract?[ExtractPlugin]:[]
+  });
 }
