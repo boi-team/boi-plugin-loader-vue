@@ -42,7 +42,8 @@ module.exports = function (opts) {
   }
 
 
-  const CssFilename = Path.posix.join(globalOpts.style.output, (ENV!=='dev'&&globalOpts.style
+  const CssFilename = Path.posix.join(globalOpts.style.output, (ENV !== 'dev' &&
+    globalOpts.style
     .useHash ? '[name].[contenthash:8].css' : '[name].css'));
   const ExtractPlugin = new ExtractTextPlugin({
     filename: CssFilename
@@ -106,6 +107,11 @@ module.exports = function (opts) {
         }]
       }]
     },
-    plugins: globalOpts.style.extract?[ExtractPlugin]:[]
+    plugins: globalOpts.style.extract ? [ExtractPlugin] : [],
+    resolve: {
+      alias: {
+        'vue$': 'vue/dist/vue.esm.js'
+      }
+    }
   });
 }
